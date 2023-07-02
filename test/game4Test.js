@@ -1,21 +1,25 @@
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ethers } = require('hardhat');
 const { assert } = require('chai');
 
 describe('Game4', function () {
-  async function deployContractAndSetVariables() {
+  let game;
+
+  beforeEach(async function () {
     const Game = await ethers.getContractFactory('Game4');
-    const game = await Game.deploy();
+    game = await Game.deploy();
+    await game.deployed();
+  });
 
-    return { game };
-  }
   it('should be a winner', async function () {
-    const { game } = await loadFixture(deployContractAndSetVariables);
+    const player1 = await ethers.provider.getSigner(0);
+    const player2 = await ethers.provider.getSigner(1);
 
-    // nested mappings are rough :}
+    const player1Address = await player1.getAddress();
+    const player2Address = await player2.getAddress();
 
-    await game.win();
+    await game.connect(player2).write(player1Address);
+    await game.connect(player1).win(player2Address);
 
-    // leave this assertion as-is
     assert(await game.isWon(), 'You did not win the game');
   });
 });
